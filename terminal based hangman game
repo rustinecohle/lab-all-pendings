@@ -1,1 +1,184 @@
+#include <stdio.h>
+#include <string.h>
+#define MAX_ATTEMPTS 6
+#define WORD_COUNT 25
+const char dictionary[WORD_COUNT][10] = {
+    "cat", "dog", "cow", "pig", "duck",
+    "goat", "bear", "fox", "wolf", "fish",
+    "lion", "deer", "frog", "crab", "hen",
+    "bat", "rat", "owl", "ant", "bee",
+    "seal", "swan", "tiger", "horse", "sheep"
+};
+void menu(void);
+void instructions(void);
+void displayHangman(int wrong);
+void playgame(void);
+int main()
+{
+    int input;
 
+    int running =1;
+    while(running){
+        menu();
+                int r = scanf("%d", &input);
+        if(r == EOF)
+            return 0;
+        if(r != 1){
+            int c;
+            while((c = getchar()) != '\n' && c != EOF);
+            input = 0;
+        }
+        if(input!=1 && input!=2 && input!=3 ){
+            printf("invalid choice please enter between 1, 2, 3");
+            continue;
+
+        }
+        switch (input)
+        {
+            case 1: playgame();
+                    break;
+            case 2: instructions();
+                    break;
+            case 3: printf("\nthanks for playing\n");
+                    running =0;
+                    break;
+            default:printf("\ninvalid choice please try again\n");
+                    break;
+        }
+    }
+
+return 0;
+
+}
+
+void menu(void){
+     printf("\n=============================\n");
+    printf("        HANGMAN GAME\n");
+    printf("=============================\n");
+    printf("  1. Play\n");
+    printf("  2. How to play\n");
+    printf("  3. Quit\n");
+    printf("-----------------------------\n");
+    printf("Enter your choice: ");
+
+
+}
+void instructions(void){
+    printf("\n--- How to Play ---\n");
+    printf("* A word is chosen and hidden as underscores.\n");
+    printf("* Guess one letter at a time.\n");
+    printf("* The first letter is given as a hint.\n");
+    printf("* Correct guesses reveal every occurrence of the letter.\n");
+    printf("* Wrong guesses cost one attempt (you have %d).\n", MAX_ATTEMPTS);
+    printf("* Repeating a letter does not cost an attempt.\n");
+    printf("* Win by revealing the whole word before attempts run out.\n");
+}
+void displayHangman(int wrong)
+{
+    printf("\n");
+    printf("  +---+\n");
+    printf("  |   |\n");
+    printf("  %c   |\n", wrong >= 1 ? 'O' : ' ');
+    printf(" %c%c%c  |\n",
+           wrong >= 3 ? '/'  : ' ',
+           wrong >= 2 ? '|'  : ' ',
+           wrong >= 4 ? '\\' : ' ');
+    printf(" %c %c  |\n",
+           wrong >= 5 ? '/'  : ' ',
+           wrong >= 6 ? '\\' : ' ');
+    printf("      |\n");
+    printf("=========\n");
+}
+void playgame(void){
+    static int index = 0;
+    char word[10];
+    char hidden[10];
+    char guessed[26];
+    char input[100];
+    char letter;
+    int guessedCount = 0;
+    int wrong = 0;
+    int j, found, repeated;
+
+    for(j = 0; dictionary[index][j] != '\0'; j++){
+        word[j] = dictionary[index][j];
+        hidden[j] = '_';
+    }
+    word[j] = '\0';
+    hidden[j] = '\0';
+
+    hidden[0] = word[0];
+
+    index++;
+    if(index == WORD_COUNT)
+        index = 0;
+
+    printf("\n--- New Game ---\n");
+
+    while(wrong < MAX_ATTEMPTS && strcmp(word, hidden) != 0){
+        printf("\nAttempts Left: %d\n", MAX_ATTEMPTS - wrong);
+        displayHangman(wrong);
+
+        printf("\nWord: ");
+        for(j = 0; hidden[j] != '\0'; j++)
+            printf("%c ", hidden[j]);
+
+        printf("\nGuessed letters: ");
+        if(guessedCount == 0)
+            printf("(none)");
+        for(j = 0; j < guessedCount; j++)
+            printf("%c ", guessed[j]);
+
+        printf("\n\nEnter a letter: ");
+        if(scanf("%99s", input) != 1)
+            return;
+
+        if(input[1] != '\0' || !((input[0] >= 'a' && input[0] <= 'z') || (input[0] >= 'A' && input[0] <= 'Z'))){
+            printf("Invalid input! Enter exactly ONE letter (a-z).\n");
+            continue;
+        }
+
+        letter = input[0];
+        if(letter >= 'A' && letter <= 'Z')
+            letter = letter + 32;
+
+        repeated = 0;
+        for(j = 0; j < guessedCount; j++){
+            if(guessed[j] == letter)
+                repeated = 1;
+        }
+        if(repeated){
+            printf("You already guessed '%c'. Try a different letter.\n", letter);
+            continue;
+        }
+
+        guessed[guessedCount] = letter;
+        guessedCount++;
+
+        found = 0;
+        for(j = 0; word[j] != '\0'; j++){
+            if(word[j] == letter){
+                hidden[j] = letter;
+                found = 1;
+            }
+        }
+
+        if(found){
+            printf("Good guess! '%c' is in the word.\n", letter);
+        }
+        else{
+            wrong++;
+            printf("Sorry, '%c' is not in the word.\n", letter);
+        }
+    }
+
+    printf("\nAttempts Left: %d\n", MAX_ATTEMPTS - wrong);
+    displayHangman(wrong);
+
+    if(strcmp(word, hidden) == 0)
+        printf("\nCongratulations, you WON!\n");
+    else
+        printf("\nGame over, you LOST.\n");
+
+    printf("The correct word was: %s\n", word);
+}
